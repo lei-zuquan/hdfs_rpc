@@ -1,20 +1,15 @@
 package com.hadoop.hdfs;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.*;
+import org.apache.hadoop.io.IOUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.BlockLocation;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
 
 public class HdfsApi {
 	private static String HDFS_URL = "hdfs://node-01:8020";
@@ -144,7 +139,7 @@ public class HdfsApi {
 		return fileStatuses;
 	}
 
-	//查找某个文件圿 HDFS集群的位罿
+	//查找某个文件在HDFS集群的位罿
 	public static BlockLocation[] getFileBlockLocations(String filePath) {
 		// 文件路径
 		Path path = new Path(filePath);
@@ -152,7 +147,7 @@ public class HdfsApi {
 		// 文件块位置
 		BlockLocation[] blkLocations = new BlockLocation[0];
 		try {
-			// 返回FileSystem对象
+			// 返回FileSystem对
 			FileSystem fs = getFs();
 			// 获取文件目录
 			FileStatus filestatus = fs.getFileStatus(path);
@@ -165,13 +160,13 @@ public class HdfsApi {
 		return blkLocations;
 	}
 
-	// 对hdfs文件系统中的文件,创建目录
+	// 对hdfs文件系统中的文件,创建目录; 可以递归创建目录
 	public static void mkdir(String dirName) throws IOException {
 		FileSystem fs = getFs();
 
 		if (fs.exists(new Path(dirName))) {
 			System.out.println("Directory already exists!");
-			fs.close();
+			//fs.close();
 			return;
 		}
 		fs.mkdirs(new Path(dirName));
@@ -186,7 +181,57 @@ public class HdfsApi {
 		fs.delete(new Path(dirName), recursive);
 	}
 
+	/**
+	 * 获取某个文件夹下的所有文件
+	 */
+	public static void getAllFileName(String path) throws Exception {
+		System.out.println(path);
+
+		if (!SRC_FILE_PATH.equals(path)){
+			String subFilePath = path.substring(SRC_FILE_PATH.length() + 1);
+			String fullFilePath = DEST_FILE_PATH + '/' + subFilePath;
+			mkdir(fullFilePath);
+		}
+
+		File file = new File(path);
+		File[] tempList = file.listFiles();
+
+		for (int i = 0; i < tempList.length; i++) {
+			if (tempList[i].isFile()) {
+				//System.out.println(tempList[i].getName());
+				//System.out.println(tempList[i].getPath());
+				String srcFilePath = tempList[i].getPath();
+				String subFilePath = srcFilePath.substring(SRC_FILE_PATH.length() + 1);
+				String fullFilePath = DEST_FILE_PATH + '/' + subFilePath;
+				copyFileToHDFS(tempList[i].getPath(), fullFilePath);
+			}
+			if (tempList[i].isDirectory()) {
+				getAllFileName(tempList[i].getAbsolutePath());
+			}
+		}
+		return;
+	}
+
+	private static String SRC_FILE_PATH = "F:\\ForLei\\法库\\法规分类";
+	private static String DEST_FILE_PATH = "/user/root/sqoop/faku";
+
 	public static void main(String[] args) throws IOException {
+		try {
+			HdfsApi.getFs();
+
+			//mkdir("/user/root/sqoop/faku/11/22/33");
+			try {
+				getAllFileName(SRC_FILE_PATH);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		} finally {
+			HdfsApi.closeFs();
+		}
+	}
+
+	private static void apiTest() throws Exception {
 		HdfsApi.getFs();
 
 		// boolean fileExist = fileExists("/user/root/spark.txt");
@@ -208,7 +253,7 @@ public class HdfsApi {
 //		for (FileStatus fileName : fileStatusArr){
 //			System.out.println(fileName.getPath().getName());
 //		}
-		
+
 		// BlockLocation[] blockBlockLocations =
 		// getFileBlockLocations("/user/root/spark.txt");
 		// for (BlockLocation block: blockBlockLocations){
