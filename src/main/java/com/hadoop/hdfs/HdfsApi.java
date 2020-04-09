@@ -15,7 +15,9 @@ public class HdfsApi {
 	private static String HDFS_URL = "hdfs://node-01:8020";
 	private static FileSystem fs = null;
 
-	// 获取FS
+	/**
+	 * 获取FS
+	 */
 	public static FileSystem getFs() throws IOException {
 
 		if (fs != null) {
@@ -28,8 +30,8 @@ public class HdfsApi {
 		conf.set("fs.default.name", HDFS_URL);
 		conf.set("fs.hdfs.impl",org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
 		System.setProperty("HADOOP_USER_NAME","root");
-		
-		
+
+
 		if (StringUtils.isBlank(HDFS_URL)) {
 			// 返回默认文件系统 如果圿 Hadoop集群下运行，使用此种方法可直接获取默认文件系统
 			try {
@@ -50,14 +52,18 @@ public class HdfsApi {
 		return fs;
 	}
 
-	// 关闭hdfs文件系统
+	/**
+	 * 关闭hdfs文件系统
+	 */
 	public static void closeFs() throws IOException {
 		if (fs != null) {
 			fs.close();
 		}
 	}
 
-	// 判断hdfs文件系统，文件是否存在
+	/**
+	 * 判断hdfs文件系统，文件是否存在
+	 */
 	public static boolean fileExists(String dirName) throws IOException {
 		// 获取 FileSystem
 		FileSystem fs = getFs();
@@ -65,7 +71,9 @@ public class HdfsApi {
 		return fs.exists(new Path(dirName));
 	}
 
-	// 读取hdfs文件信息，并打印在控制台
+	/**
+	 * 读取hdfs文件信息，并打印在控制台
+	 */
 	public static void readFile(String src) throws IOException {
 		// 获取 FileSystem
 		FileSystem fs = getFs();
@@ -83,7 +91,9 @@ public class HdfsApi {
 		}
 	}
 
-	// 上传文件至hdfs文件系统
+	/**
+	 * 上传文件至hdfs文件系统，如果目录不存在，则会进行递归创建
+	 */
 	public static void copyFileToHDFS(String src, String dst)
 			throws IOException {
 		// 获取filesystem
@@ -109,7 +119,9 @@ public class HdfsApi {
 		}
 	}
 
-	// 从hdfs文件系统中下载文件
+	/**
+	 * 从hdfs文件系统中下载文件
+	 */
 	public static void downLoadFromHDFS(String src, String dst)
 			throws IOException {
 		FileSystem fs = getFs();
@@ -117,19 +129,25 @@ public class HdfsApi {
 		fs.copyToLocalFile(false, new Path(src), new Path(dst), true);
 	}
 
-	// 对hdfs文件系统中的文件,进行重命名和移动
+	/**
+	 * 对hdfs文件系统中的文件,进行重命名和移动
+	 */
 	public static void renameMV(String src, String dst) throws IOException {
 		FileSystem fs = getFs();
 		fs.rename(new Path(src), new Path(dst));
 	}
 
-	// 对hdfs文件系统中的文件,进行删除
+	/**
+	 * 对hdfs文件系统中的文件,进行删除
+	 */
 	public static void delete(String fileName) throws IOException {
 		FileSystem fs = getFs();
 		fs.deleteOnExit(new Path(fileName));
 	}
 
-	// 对hdfs文件系统中的文件,获取文件列表
+	/**
+	 * 对hdfs文件系统中的文件,获取文件列表
+	 */
 	public static FileStatus[] listFile(String dirName) throws IOException {
 		FileSystem fs = getFs();
 		FileStatus[] fileStatuses = fs.listStatus(new Path(dirName));
@@ -139,7 +157,9 @@ public class HdfsApi {
 		return fileStatuses;
 	}
 
-	//查找某个文件在HDFS集群的位罿
+	/**
+	 * 查找某个文件在HDFS集群的位置
+	 */
 	public static BlockLocation[] getFileBlockLocations(String filePath) {
 		// 文件路径
 		Path path = new Path(filePath);
@@ -160,7 +180,9 @@ public class HdfsApi {
 		return blkLocations;
 	}
 
-	// 对hdfs文件系统中的文件,创建目录; 可以递归创建目录
+	/**
+	 * 对hdfs文件系统中的文件,创建目录; 可以递归创建目录
+	 */
 	public static void mkdir(String dirName) throws IOException {
 		FileSystem fs = getFs();
 
@@ -172,13 +194,17 @@ public class HdfsApi {
 		fs.mkdirs(new Path(dirName));
 	}
 
-	// 对hdfs文件系统中的文件,删除目录; recursive，true表示递归删除目录下所有文件，false就只能删除空目录
+	/**
+	 * 对hdfs文件系统中的文件,删除目录; recursive，true表示递归删除目录下所有文件，false就只能删除空目录
+	 */
 	public static void deletedir(String dirName, boolean recursive)
 			throws IOException {
 		FileSystem fs = getFs();
 		// true表示递归删除目录下所有文件
 		// false就只能删除空目录
-		fs.delete(new Path(dirName), recursive);
+		if (fileExists(dirName)){
+			fs.delete(new Path(dirName), recursive);
+		}
 	}
 
 	/**
@@ -219,7 +245,7 @@ public class HdfsApi {
 		try {
 			HdfsApi.getFs();
 
-			//mkdir("/user/root/sqoop/faku/11/22/33");
+			deletedir(DEST_FILE_PATH,true);
 			try {
 				getAllFileName(SRC_FILE_PATH);
 			} catch (Exception e) {
