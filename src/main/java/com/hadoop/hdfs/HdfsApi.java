@@ -12,7 +12,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 public class HdfsApi {
-	private static String HDFS_URL = "hdfs://node-01:8020";
+	private static String HDFS_URL = "hdfs://js001.bigdata.com:8020";
 	private static FileSystem fs = null;
 
 	/**
@@ -24,12 +24,13 @@ public class HdfsApi {
 			return fs;
 		}
 
-		System.setProperty("hadoop.home.dir", "/opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/bin/");
+		//System.setProperty("hadoop.home.dir", "/opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/bin/");
 		// 获取配置文件
 		Configuration conf = new Configuration();
 		conf.set("fs.default.name", HDFS_URL);
 		conf.set("fs.hdfs.impl",org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
-		System.setProperty("HADOOP_USER_NAME","root");
+		System.setProperty("HADOOP_USER_NAME","bigdatadev");
+		//System.setProperty("HADOOP_USER_PASSWORD","bDdex78K");
 
 
 		if (StringUtils.isBlank(HDFS_URL)) {
@@ -244,13 +245,23 @@ public class HdfsApi {
 	public static void main(String[] args) throws IOException {
 		try {
 			HdfsApi.getFs();
-
-			deletedir(DEST_FILE_PATH,true);
-			try {
-				getAllFileName(SRC_FILE_PATH);
-			} catch (Exception e) {
-				e.printStackTrace();
+			copyFileToHDFS("d://test.jpg", "/user/bigdatadev/up_test.jpg");
+			FileStatus[] fileStatuses = listFile("/user/bigdatadev");
+			for (FileStatus fileName : fileStatuses){
+				System.out.println(fileName.getPath().getName());
 			}
+
+			delete("/user/bigdatadev/up_test.jpg");
+			fileStatuses = listFile("/user/bigdatadev");
+			for (FileStatus fileName : fileStatuses){
+				System.out.println(fileName.getPath().getName());
+			}
+//			deletedir(DEST_FILE_PATH,true);
+//			try {
+//				getAllFileName(SRC_FILE_PATH);
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
 
 		} finally {
 			HdfsApi.closeFs();
